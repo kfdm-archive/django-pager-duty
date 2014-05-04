@@ -1,3 +1,50 @@
+from django.conf import settings
 from django.shortcuts import render
+from django.views.generic.base import View
 
-# Create your views here.
+import requests
+from requests.auth import AuthBase
+
+
+class PagerDutyAuth(AuthBase):
+    def __call__(self, r):
+        r.headers['Content-Type'] = 'application/json'
+        r.headers['Authorization'] = 'Token token=' + settings.PAGERDUTY_API_KEY
+        return r
+
+
+class OnCallView(View):
+    _URL = 'https://{0}.pagerduty.com/api/v1/escalation_policies/on_call'.format(
+        settings.PAGERDUTY_SUBDOMAIN
+    )
+
+    def _parse_on_call(self):
+        response = requests.get(self._URL, auth=PagerDutyAuth())
+        response.raise_for_status()
+        schedule = response.json()
+        for policy in schedule['escalation_policies']:
+            for on_call in policy['on_call']:
+                if on_call['level'] != 1:
+                    continue
+                yield {
+                    'start': on_call['start'],
+                    'end': on_call['end'],
+                    'userid': on_call['user']['id'],
+                    'user': on_call['user']['name'],
+                    'userlink': 'https://{0}.pagerduty.com/users/{1}'.format(
+                        settings.PAGERDUTY_SUBDOMAIN,
+                        on_call['user']['id']
+                    ),
+                    'policyid': policy['id'],
+                    'policy': policy['name'],
+                    'policylink': 'https://{0}.pagerduty.com/escalation_policies#{1}'.format(
+                        settings.PAGERDUTY_SUBDOMAIN,
+                        policy['id']
+                    ),
+                }
+
+    def get(self, request):
+        on_call = self._parse_on_call()
+        return render(request, 'pagerduty_oncall.html', {
+            'on_call': on_call,
+        })

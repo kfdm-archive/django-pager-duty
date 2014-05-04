@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h2>On Call Schedule</h2>
+
+<table class="table table-condensed">
+{% for person in on_call %}
+<tr>
+    <td>
+        <a href="{{ person.userlink }}">
+        {{ person.user }}
+        </a>
+    </td>
+    <td>
+        <a href="{{ person.policylink }}">
+            {{ person.policy }}
+        </a>
+    </td>
+    <td>{{ person.start }}</td>
+    <td>{{ person.end }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
