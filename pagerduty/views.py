@@ -1,9 +1,12 @@
 from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic.base import View
 
 import requests
 from requests.auth import AuthBase
+
+from icalendar import Calendar
 
 
 class PagerDutyAuth(AuthBase):
@@ -48,3 +51,20 @@ class OnCallView(View):
         return render(request, 'pagerduty_oncall.html', {
             'on_call': on_call,
         })
+
+
+class CalendarView(View):
+    _URL = "http://{0}.pagerduty.com/private/{1}/feed"
+
+    def get(self, request, api_key):
+        url = self._URL.format(settings.PAGERDUTY_SUBDOMAIN, api_key)
+        response = requests.get(url)
+        response.raise_for_status()
+
+        cal = Calendar.from_ical(response.text)
+        print cal
+
+        return HttpResponse(
+            content=response.text,
+            #content_type='application/atom+xml; charset=utf-8'
+        )

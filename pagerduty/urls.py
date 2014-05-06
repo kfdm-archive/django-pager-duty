@@ -1,7 +1,8 @@
-from django.conf.urls import patterns
-from pagerduty.views import OnCallView
+from django.conf.urls import patterns, url
+from pagerduty.views import OnCallView, CalendarView
 
 urlpatterns = patterns(
     '',
-    (r'^$', OnCallView.as_view()),
+    url(r'^$', OnCallView.as_view()),
+    url(r'^(?P<api_key>\w+)/$', CalendarView.as_view()),
 )
