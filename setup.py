@@ -8,7 +8,7 @@ setup(
     description='PagerDuty Filtering and On Call Display',
     author='Paul Traylor',
     url='http://github.com/kfdm/django-pager-duty/',
-    version='0.0.1',
+    version='0.1.0',
     packages=['pagerduty'],
     classifiers=[
         'Development Status :: 3 - Alpha',
