@@ -55,16 +55,26 @@ class OnCallView(View):
 
 class CalendarView(View):
     _URL = "http://{0}.pagerduty.com/private/{1}/feed"
+    _BLACKLIST = getattr(settings, 'PAGERDUTY_BLACKLIST', ())
 
     def get(self, request, api_key):
         url = self._URL.format(settings.PAGERDUTY_SUBDOMAIN, api_key)
+
         response = requests.get(url)
         response.raise_for_status()
 
-        cal = Calendar.from_ical(response.text)
-        print cal
+        dest = Calendar()
+        source = Calendar.from_ical(response.text)
+
+        for key, value in source.items():
+            dest.add(key, value)
+
+        for event in source.subcomponents:
+            if 'SUMMARY' in event and event['SUMMARY'] in self._BLACKLIST:
+                continue
+            dest.add_component(event)
 
         return HttpResponse(
-            content=response.text,
-            #content_type='application/atom+xml; charset=utf-8'
+            content=dest.to_ical(),
+            content_type='text/plain; charset=utf-8'
         )
