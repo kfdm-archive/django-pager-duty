@@ -9,6 +9,9 @@ from requests.auth import AuthBase
 from icalendar import Calendar
 
 
+__all__ = ['OnCallView', 'CalendarView']
+
+
 class PagerDutyAuth(AuthBase):
     def __call__(self, r):
         r.headers['Content-Type'] = 'application/json'
@@ -17,12 +20,11 @@ class PagerDutyAuth(AuthBase):
 
 
 class OnCallView(View):
-    _URL = 'https://{0}.pagerduty.com/api/v1/escalation_policies/on_call'.format(
-        settings.PAGERDUTY_SUBDOMAIN
-    )
+    _URL = 'https://{0}.pagerduty.com/api/v1/escalation_policies/on_call'
 
     def _parse_on_call(self):
-        response = requests.get(self._URL, auth=PagerDutyAuth())
+        url = self._URL.format(settings.PAGERDUTY_SUBDOMAIN)
+        response = requests.get(url, auth=PagerDutyAuth())
         response.raise_for_status()
         schedule = response.json()
         for policy in schedule['escalation_policies']:
@@ -47,9 +49,8 @@ class OnCallView(View):
                 }
 
     def get(self, request):
-        on_call = self._parse_on_call()
         return render(request, 'pagerduty_oncall.html', {
-            'on_call': on_call,
+            'on_call': self._parse_on_call(),
         })
 
 
