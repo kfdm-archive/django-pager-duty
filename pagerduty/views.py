@@ -79,3 +79,27 @@ class CalendarView(View):
             content=dest.to_ical(),
             content_type='text/plain; charset=utf-8'
         )
+
+
+class ReportView(View):
+    _URL = 'https://{0}.pagerduty.com/api/v1/incidents'
+
+    def _parse_incidents(self):
+        url = self._URL.format(settings.PAGERDUTY_SUBDOMAIN)
+        response = requests.get(url, auth=PagerDutyAuth())
+        response.raise_for_status()
+        schedule = response.json()
+        for incident in schedule['incidents']:
+            if incident['trigger_type'] == 'nagios_trigger':
+                incident['summary'] = '{HOSTNAME} {SERVICEDESC}'.format(**incident['trigger_summary_data'])
+            if incident['trigger_type'] == 'trigger_src_event':
+                incident['summary'] = incident['trigger_summary_data']['description']
+            # TODO: To get the nagios information that we want, we need to make a call to
+            # /api/v1/incidents/<id>/log_entries and then to
+            # /api/v1/log_entries/<id> to get the nagios info?
+            yield incident
+
+    def get(self, request):
+        return render(request, 'pagerduty_report.html', {
+            'incidents': self._parse_incidents(),
+        })

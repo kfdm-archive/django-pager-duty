@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h2>Reports</h2>
+
+<table class="table table-condensed">
+<tr>
+    <th>Service</th>
+    <th>Resolved By</th>
+    <th>Escalations</th>
+    <th>Summary</th>
+    <th>Triggered Date</th>
+</tr>
+{% for incident in incidents %}
+<tr>
+    <td><a href="{{ incident.html_url }}">
+        {{ incident.service.name }}
+    </a></td>
+    <td><a href="{{ incident.resolved_by_user.html_url }}">
+        {{ incident.resolved_by_user.name }}
+    </a></td>
+    <td>{{ incident.number_of_escalations }}</td>
+    <td>{{ incident.summary }}</td>
+    <td>{{ incident.created_on }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
